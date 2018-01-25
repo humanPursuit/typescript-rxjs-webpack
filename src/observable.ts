@@ -1,7 +1,43 @@
 import * as Rx from 'rxjs';
 import * as $ from 'jquery';
 
-// const requestStream = Rx.Observable.of('https://api.github.com/users');
+const refreshBtn = document.querySelector('.refresh');
+const btn1 = document.querySelector('.btn1');
+const btn2 = document.querySelector('.btn2');
+const btn3 = document.querySelector('.btn3');
+
+const refreshClickStream = Rx.Observable.fromEvent(refreshBtn, 'click');
+const closeClickStream1 = Rx.Observable.fromEvent(btn1, 'click');
+const closeClickStream2 = Rx.Observable.fromEvent(btn2, 'click');
+const closeClickStream3 = Rx.Observable.fromEvent(btn3, 'click');
+
+const requestOnClickStream = refreshClickStream.map(function () {
+    var randomOffset = Math.floor(Math.random() * 500);
+    return 'https://api.github.com/users?since=' + randomOffset;
+});
+
+/******* *******/
+// four versions of request stream
+
+const requestStream = refreshClickStream.startWith('startup click')
+    .map(function () {
+        var randomOffset = Math.floor(Math.random() * 500);
+        return 'https://api.github.com/users?since=' + randomOffset;
+    });
+
+// const requestStream1 = requestOnClickStream.merge(Rx.Observable.of('https://api.github.com/users'))
+
+// const requestStream2 = requestOnClickStream.startWith('https://api.github.com/users')
+
+// const startUpRequestStream = Rx.Observable.of('https://api.github.com/users');
+// const requestStream3 = Rx.Observable.merge(
+//     requestOnClickStream,
+//     startUpRequestStream
+// );
+
+/******* *******/
+
+// avoid callbacks
 
 // requestStream.subscribe(function (requestUrl) {
 //     const responseStream = Rx.Observable.create(function (observer) {
@@ -15,24 +51,51 @@ import * as $ from 'jquery';
 //     });
 // });
 
-// const clickStream = Rx.Observable.fromEvent(document.body, 'click');
+const responseStream = requestStream
+    .flatMap(requestUrl => Rx.Observable.fromPromise($.getJSON(requestUrl)));
 
-// const stream = clickStream
-//     .map(function () { return 1; });
+// const suggestionStream1 = responseStream
+//     .merge(refreshClickStream.map(() => null))
+//     .startWith(null);
 
-// stream.subscribe(function (x) {
-//     console.log(x);
-// })
+// single button refresh
 
-let visitors = [
-    "Namita",
-    "Amit",
-    "Rohit",
-    "Neetika"
-];
+// combineLatest
+// stream A: --a-----------e--------i-------->
+// stream B: -----b----c--------d-------q---->
+//           vvvvvvvv combineLatest(f) vvvvvvv
+//           ----AB---AC--EC---ED--ID--IQ---->
 
-let source = Rx.Observable.from(visitors)
-    .map(x => Rx.Observable.of(x))
-    .mergeAll();
+const suggestionStream1 = closeClickStream1.startWith('startup click')
+    .combineLatest(responseStream, function (click, listUsers) {
+        return listUsers[Math.floor(Math.random() * listUsers.length)];
+    })
+    .merge(refreshClickStream.map(() => null))
+    .startWith(null);
 
-source.subscribe(x => console.log(x));
+suggestionStream1.subscribe(suggestion => {
+    console.group('stream1');
+    console.log(suggestion);
+    console.groupEnd();
+});
+
+// flatMap vs map
+// https://namitamalik.github.io/Map-vs-FlatMap/
+
+// let visitors = [
+//     "Namita",
+//     "Amit",
+//     "Rohit",
+//     "Neetika"
+// ];
+
+// let source = Rx.Observable.from(visitors)
+//     .map(x => Rx.Observable.of(x))
+//     .mergeAll();
+
+// equal to below
+
+// let source = Rx.Observable.from(visitors)
+//     .flatMap(x => Rx.Observable.of(x))
+
+// source.subscribe(x => console.log(x));

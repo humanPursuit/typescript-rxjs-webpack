@@ -20,7 +20,7 @@
     "npm": ">=1.4.3"
   },
   "scripts": {
-    "start": "webpack -w"
+    "start": "webpack-dev-server"
   },
   "devDependencies": {
     "@types/jquery": "^3.3.0",
