@@ -1,1 +1,2 @@
-import "./src/observable";
+// import "./src/observable";
+import './src/cold_hot_observable';
