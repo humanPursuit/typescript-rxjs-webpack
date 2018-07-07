@@ -3,4 +3,5 @@
 // import './src/subject';
 // import "./src/buffer";
 
-import "./src/mergeMap.js";
+// import "./src/mergeMap.js";
+import "./src/basic.ts";
